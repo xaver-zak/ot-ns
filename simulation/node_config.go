@@ -147,6 +147,7 @@ func DefaultNodeConfig() NodeConfig {
 	return NodeConfig{
 		ID:             -1, // < 0 for the next available nodeid
 		Type:           ROUTER,
+		DeviceModel:    "stm32wb55rg",
 		Version:        "",
 		X:              0,
 		Y:              0,

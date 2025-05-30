@@ -58,3 +58,6 @@ ot-rcp
 
 # lock files
 package-lock.json
+
+# energy measurement files
+/energy_results

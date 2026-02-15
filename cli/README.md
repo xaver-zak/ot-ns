@@ -51,7 +51,7 @@ NOTE: the below sections including header and contents are automatically read an
 Add a node to the simulation and get the node ID.
 
 ```shell
-add <type> [x <x>] [y <y>] [rr <radio-range>] [id <node-id>] [restore] [exe <path>] [v11|v12|v13|v14]
+add <type> [x <x>] [y <y>] [rr <radio-range>] [id <node-id>] [restore] [exe <path>] [v11|v12|v13|v14] [dm <devicemodel>]
 ```
 
 The `<type>` can be `router`, `fed`, `med`, `sed`, `ssed`, `br` (Border Router), or `wifi` (for a Wi-Fi interferer node). Node ID can be specified using the `id` parameter, otherwise OTNS assigns the next available one. If the `restore` option is specified, the node restores its network configuration from persistent storage.
@@ -59,6 +59,8 @@ The `<type>` can be `router`, `fed`, `med`, `sed`, `ssed`, `br` (Border Router),
 The (advanced) `exe` option can be used to specify a node executable for the new node; either a name only which is then located in the default search paths, or a full abs or rel pathname pointing to the executable to use.
 
 The options `v11`, `v12`, `v13` and `v14` are a quick way to add a Thread v1.x node. This uses the binaries prebuilt for these nodes the `ot-rfsim` submodule, `ot-versions` directory. See [GUIDE.md](../GUIDE.md) for details on this.
+
+The option `dm` can be used to specify device model name used for node energy consumption calculations. If invalid device model is set default value will be used. For available device models type command `devicemodel`.
 
 ```bash
 > add router
@@ -87,6 +89,9 @@ Done
 Done
 > add router exe "/home/user/my/path/to/ot-cli-ftd"
 8
+Done
+> add router dm "stm32wb55rg"
+9
 Done
 ```
 
@@ -231,12 +236,71 @@ Done
 Done
 ```
 
-### energy
+### devicemodel
 
-To be documented (TODO) - saves energy use information of nodes to file.
+Set the device model for Energy consumption calculations.
 
 ```shell
-energy [save] "<filename>"
+devicemodel <node-id> [<node-id> ...] | all | <node-id-1>-<node-id-2> "devicemodel"
+```
+
+The node ID selection supports individual node(s), range(s) of nodes, or “all” nodes. If no parameter is set, a list of all available device models is shown. Device models provide power consumption values measured on real devices.
+
+Three possible options are available with the devicemodel command: output a list of all available device models, get device model names for a specified node ID range, and set device models for a specified node ID range.
+
+NOTE: Changing the device model mid-simulation may cause a rapid change in network power consumption because each node’s consumed energy is recalculated from the beginning of its existence, while network energy shows the difference between periodic snapshots, resulting in a severe network energy change. Overall network energy consumption will be affected starting from the last network energy snapshot (last tick).
+
+```bash
+> devicemodel
+Device Models list:
+ esp32h2         ESP32-H2, measured at U=3.3V
+ nrf52840        nRF52840, measured at U=3.0V
+ nrf5340         nRF5340, measured at U=3.0V
+ stm32wb55rg     STM32WB55RG, U=3.3V-all data from datasheet
+Done
+> devicemodel 1
+id=1    model=stm32wb55rg
+Done
+> devicemodel 1 3
+id=1    model=stm32wb55rg
+id=3    model=esp32h2
+Done
+> devicemodel all
+id=1    model=stm32wb55rg
+id=2    model=nrf5340
+id=3    model=esp32h2
+id=4    model=esp32h2
+id=5    model=stm32wb55rg
+Done
+> devicemodel 1 esp32h2
+Done
+> devicemodel 1-3 esp32h2
+Done
+> devicemodel 2 5 nrf5340
+Done
+> devicemodel 2-3 nrf52840
+Done
+> devicemodel all nrf5340
+Done
+```
+
+### energy
+
+Saves energy consumption by nodes and entire OT network in txt or csv format.
+
+```shell
+energy (txt | csv) "<filename>"
+```
+
+The `energy` command saves the energy consumption of each node, as well as the aggregate consumption of the entire OpenThread network, and writes the results to either a .txt or .csv file (depending on the specified output format) in the `./energy_results` directory. If no filename is provided, the default names `energy` and `energy_nodes` are used. Energy is computed by tracking how long each node spends in each `radio state` and then calculating energy consumption (mJ) using the device-specific power draw figures.
+
+```bash
+> energy csv
+Done
+> energy txt
+Done
+> energy csv consumption
+Done
 ```
 
 ### exe

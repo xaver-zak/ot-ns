@@ -301,6 +301,8 @@ func (rt *CmdRunner) execute(cmd *Command, output io.Writer) {
 		rt.executeRfSim(cc, cc.RfSim)
 	} else if cmd.Energy != nil {
 		rt.executeEnergy(cc, cc.Energy)
+	} else if cmd.DeviceModel != nil {
+		rt.executeDeviceModel(cc, cc.DeviceModel)
 	} else if cmd.LogLevel != nil {
 		rt.executeLogLevel(cc, cc.LogLevel)
 	} else if cmd.Watch != nil {
@@ -444,6 +446,13 @@ func (rt *CmdRunner) executeAddNode(cc *CommandContext, cmd *AddCmd) {
 	}
 	if cmd.Raw != nil {
 		cfg.IsRaw = true
+	}
+	if cmd.Devmodel != nil {
+		if rt.sim.GetEnergyAnalyser().DeviceModelExists(*cmd.Devmodel) {
+			cfg.DeviceModel = *cmd.Devmodel
+		} else {
+			cc.warnf("Device model %s not found, using default model", *cmd.Devmodel)
+		}
 	}
 
 	rt.postAsyncWait(cc, func(sim *simulation.Simulation) {
@@ -715,7 +724,7 @@ func (rt *CmdRunner) executeLsNodes(cc *CommandContext, cmd *NodesCmd) {
 			var line strings.Builder
 			line.WriteString(fmt.Sprintf("id=%d\ttype=%-6s  extaddr=%016x  rloc16=%04x  x=%-2d\ty=%-3d\tz=%-3d\tstate=%s\tfailed=%v", nodeId, dnode.Type, dnode.ExtAddr, dnode.Rloc16,
 				dnode.X, dnode.Y, dnode.Z, dnode.Role, dnode.IsFailed()))
-			line.WriteString(fmt.Sprintf("\texe=%s", snode.GetExecutableName()))
+			line.WriteString(fmt.Sprintf("\texe=%s\t deviceModel=%s", snode.GetExecutableName(), snode.GetDeviceModelName()))
 			cc.outputf("%s\n", line.String())
 		}
 	})
@@ -1245,15 +1254,54 @@ func (rt *CmdRunner) executeCoaps(cc *CommandContext, cmd *CoapsCmd) {
 	}
 }
 
-func (rt *CmdRunner) executeEnergy(cc *CommandContext, energy *EnergyCmd) {
-	if energy.Save != nil {
-		rt.postAsyncWait(cc, func(sim *simulation.Simulation) {
-			sim.GetEnergyAnalyser().SaveEnergyDataToFile(energy.Name, sim.Dispatcher().CurTime)
-		})
-	} else {
-		cc.outputf("energy <command>\n")
-		cc.outputf("\tsave [output name]\n")
-	}
+func (rt *CmdRunner) executeDeviceModel(cc *CommandContext, cmd *DeviceModelCmd) {
+	rt.postAsyncWait(cc, func(sim *simulation.Simulation) {
+		if len(cmd.Nodes) == 0 {
+			// no nodes specified => list all available device models from device registry
+			availableModels := sim.Dispatcher().GetAvailableDeviceModels()
+			cc.outputf("Device Models list:\n")
+			for _, model := range availableModels {
+				cc.outputf(" %s\n", model)
+			}
+		} else {
+			// get || set deviceModel for specified nodes
+			for _, nodeId := range rt.expandNodeSelector(cmd.Nodes) {
+				node, _ := rt.getNodeById(nodeId)
+				if node == nil {
+					cc.warnf("node %d not found, skipping", nodeId)
+					continue
+				} else if cmd.Model == nil {
+					// get deviceModel key
+					devmodel := sim.Dispatcher().GetNodeDeviceModel(node.Id)
+					cc.outputf("id=%d\tmodel=%s\n", node.Id, devmodel)
+				} else if sim.GetEnergyAnalyser().DeviceModelExists(*cmd.Model) {
+					// set deviceModel for specified nodes if model exists in DeviceModels
+					node.SetDeviceModelName(*cmd.Model)
+					sim.Dispatcher().SetNodeDeviceModel(node.Id, *cmd.Model)
+				} else {
+					cc.warnf("Device Model NOT found in list")
+					return
+				}
+			}
+		}
+	})
+}
+
+func (rt *CmdRunner) executeEnergy(cc *CommandContext, cmd *EnergyCmd) {
+	rt.postAsyncWait(cc, func(sim *simulation.Simulation) {
+		simTime := sim.Dispatcher().CurTime
+		if sim.GetEnergyAnalyser().GetNetworkLatestSnap().Timestamp != simTime {
+			sim.GetEnergyAnalyser().CreateEnergyResultsDir()
+			sim.GetEnergyAnalyser().StoreNetworkEnergy(simTime)
+		}
+
+		switch cmd.Type {
+		case "txt":
+			sim.GetEnergyAnalyser().SaveEnergyDataToTxtFile(cmd.Name, simTime)
+		case "csv":
+			sim.GetEnergyAnalyser().SaveEnergyDataToCsvFile(cmd.Name, simTime)
+		}
+	})
 }
 
 func (rt *CmdRunner) executeExe(cc *CommandContext, cmd *ExeCmd) {

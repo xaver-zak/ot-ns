@@ -440,6 +440,7 @@ class OTNS(object):
             restore=False,
             txpower: int = None,
             version: str = None,
+            deviceModel: str = None,
             script: str = None) -> int:
         """
         Add a new node to the simulation.
@@ -453,6 +454,7 @@ class OTNS(object):
         :param restore: whether the node restores network configuration from persistent storage
         :param txpower: Tx power in dBm of node, or None for OT node default
         :param version: optional OT node version string like 'v11', 'v12', 'v13', or 'v14', etc.
+        :param deviceModel: specify device model for energy calculations.
         :param script: optional OT node init script as a single string.
         :return: added node ID
         """
@@ -476,6 +478,9 @@ class OTNS(object):
 
         if version is not None:
             cmd += f' {version}'
+
+        if deviceModel is not None:
+            cmd += f' dm "{deviceModel}"'
 
         if script is not None:
             cmd += ' raw'

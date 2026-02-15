@@ -46,6 +46,7 @@ type Command struct {
 	Debug               *DebugCmd               `| @@` //nolint
 	Del                 *DelCmd                 `| @@` //nolint
 	DemoLegend          *DemoLegendCmd          `| @@` //nolint
+	DeviceModel         *DeviceModelCmd         `| @@` //nolint
 	Energy              *EnergyCmd              `| @@` //nolint
 	Exe                 *ExeCmd                 `| @@` //nolint
 	Exit                *ExitCmd                `| @@` //nolint
@@ -307,6 +308,7 @@ type AddCmd struct {
 	Restore    *RestoreFlag    `| @@`                 //nolint
 	Version    *ThreadVersion  `| @@`                 //nolint
 	Raw        *RawFlag        `| @@`                 //nolint
+	Devmodel   *string         `| "dm" @String `      //nolint
 	Executable *ExecutableFlag `| @@ )*`              //nolint
 }
 
@@ -395,10 +397,17 @@ type WebCmd struct {
 }
 
 // noinspection GoVetStructTag
+type DeviceModelCmd struct {
+	Cmd   struct{}       `"devicemodel"`    //nolint
+	Nodes []NodeSelector `( @@ )*`          //nolint
+	Model *string        `@(String|Ident)?` //nolint
+}
+
+// noinspection GoVetStructTag
 type EnergyCmd struct {
-	Cmd  struct{}  `"energy"` //nolint
-	Save *SaveFlag `( @@ )?`  //nolint
-	Name string    `@String?` //nolint
+	Cmd  struct{} `"energy"`         //nolint
+	Type string   `@("txt" | "csv")` //nolint
+	Name string   `@String?`         //nolint
 }
 
 // noinspection GoVetStructTag

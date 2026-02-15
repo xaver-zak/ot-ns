@@ -147,6 +147,7 @@ func DefaultNodeConfig() NodeConfig {
 	return NodeConfig{
 		ID:             -1, // < 0 for the next available nodeid
 		Type:           ROUTER,
+		DeviceModel:    "esp32h2",
 		Version:        "",
 		X:              0,
 		Y:              0,

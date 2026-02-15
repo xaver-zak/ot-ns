@@ -123,6 +123,7 @@ func newNode(s *Simulation, nodeid NodeId, cfg *NodeConfig, dnode *dispatcher.No
 		cfg.IsRouter, cfg.IsBorderRouter, cfg.RxOffWhenIdle)
 	node.Logger.Debugf("  exe cmd : %v", cmd)
 	node.Logger.Debugf("  position: (%d,%d,%d)", cfg.X, cfg.Y, cfg.Z)
+	node.Logger.Debugf("  DeviceModel: (%s)", cfg.DeviceModel)
 
 	if node.pipeIn, err = cmd.StdinPipe(); err != nil {
 		return node, err
@@ -412,6 +413,14 @@ func (node *Node) CommandExpectEnabledOrDisabled(cmd string) bool {
 
 func (node *Node) SetChannel(ch ChannelId) {
 	node.Command(fmt.Sprintf("channel %d", ch))
+}
+
+func (node *Node) GetDeviceModelName() string {
+	return node.cfg.DeviceModel
+}
+
+func (node *Node) SetDeviceModelName(model string) {
+	node.cfg.DeviceModel = model
 }
 
 func (node *Node) GetRfSimParam(param RfSimParam) RfSimParamValue {

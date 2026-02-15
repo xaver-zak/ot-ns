@@ -1073,7 +1073,7 @@ func (d *Dispatcher) AddNode(nodeid NodeId, cfg *NodeConfig) *Node {
 	d.reconstructNodesArray()
 	d.Counters.TopologyChanges++
 	d.alarmMgr.AddNode(nodeid)
-	d.energyAnalyser.AddNode(nodeid, d.CurTime)
+	d.energyAnalyser.AddNode(nodeid, d.CurTime, &node.DeviceModel, &node.RadioNode.TxPower, &node.Mode)
 	d.vis.AddNode(nodeid, cfg)
 	d.radioModel.AddNode(node.RadioNode)
 	d.setAlive(nodeid)
@@ -1088,6 +1088,28 @@ func (d *Dispatcher) AddNode(nodeid NodeId, cfg *NodeConfig) *Node {
 		}
 	}
 	return node
+}
+
+func (d *Dispatcher) SetNodeDeviceModel(id NodeId, model string) {
+	node := d.nodes[id]
+	logger.AssertNotNil(node)
+
+	node.DeviceModel = model
+	if d.energyAnalyser != nil {
+		radioEnergy := d.energyAnalyser.GetNode(node.Id)
+		radioEnergy.SetDeviceModel(d.GetNodeDeviceModel(node.Id))
+	}
+}
+
+func (d *Dispatcher) GetNodeDeviceModel(id NodeId) string {
+	node := d.nodes[id]
+	logger.AssertNotNil(node)
+
+	return node.DeviceModel
+}
+
+func (d *Dispatcher) GetAvailableDeviceModels() []string {
+	return d.energyAnalyser.GetAllDeviceModelsBrief()
 }
 
 func (d *Dispatcher) setNodeRloc16(srcid NodeId, rloc16 uint16) {

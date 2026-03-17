@@ -70,6 +70,7 @@ type JoinResult struct {
 type Node struct {
 	D           *Dispatcher
 	Id          NodeId
+	DeviceModel string
 	X, Y, Z     int
 	PartitionId uint32
 	ExtAddr     uint64
@@ -110,6 +111,7 @@ func newNode(d *Dispatcher, nodeid NodeId, cfg *NodeConfig) *Node {
 		Id:              nodeid,
 		CurTime:         d.CurTime,
 		CreateTime:      d.CurTime,
+		DeviceModel:     cfg.DeviceModel,
 		X:               cfg.X,
 		Y:               cfg.Y,
 		Z:               cfg.Z,

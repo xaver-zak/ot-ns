@@ -32,6 +32,7 @@ type NodeConfig struct {
 	ID             int
 	Type           string // Type as requested on creation (router, sed, fed, br, etc.)
 	Version        string // Thread version string or "" for default
+	DeviceModel    string // Device model name used for Energy caculations
 	X, Y, Z        int
 	IsAutoPlaced   bool
 	IsRaw          bool // A raw node skips all initialization CLI commands, including any init-script.

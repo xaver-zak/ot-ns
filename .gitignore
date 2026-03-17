@@ -55,3 +55,6 @@ ot-rcp
 /pylibs/dist/
 /pylibs/pyOTNS.egg-info/
 /.venv-otns
+
+# energy measurement files
+/energy_results

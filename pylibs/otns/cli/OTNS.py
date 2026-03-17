@@ -1359,6 +1359,23 @@ class OTNS(object):
         """
         return f"/tmp/otns/socket_dispatcher_{self._sim_id}"
 
+    def energy_save(self, format: str = "csv", filename: str = None, detailed: bool = False) -> None:
+        """
+        Saves energy consumption of nodes + network to csv or txt file
+
+        :param format: file format of saved file default .csv
+        :param filename: file name to save to
+        :param detailed: flag for saving detailed power consumption each node
+
+        """
+        cmd = f'energy {format}'
+        if filename is not None:
+            cmd += f' "{filename}"'
+        if detailed:
+            cmd += f' detailed'
+
+        self._do_command(cmd)
+
     @staticmethod
     def _expect_int(output: List[str]) -> int:
         assert len(output) == 1, output
